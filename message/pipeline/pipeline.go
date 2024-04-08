@@ -125,7 +125,6 @@ type State struct {
 	Config Config
 
 	Package string
-	program *loader.Program
 
 	Extracted Messages `json:"messages"`
 

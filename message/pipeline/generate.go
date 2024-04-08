@@ -21,7 +21,7 @@ import (
 	"golang.org/x/text/internal/catmsg"
 	"golang.org/x/text/internal/gen"
 	"golang.org/x/text/language"
-	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/packages"
 )
 
 var transRe = regexp.MustCompile(`messages\.(.*)\.json`)
@@ -35,15 +35,14 @@ func (s *State) Generate() error {
 		path = "."
 	}
 	isDir := path[0] == '.'
-	prog, err := loadPackages(&loader.Config{}, []string{path})
+	pkgs, err := packages.Load(nil, path)
 	if err != nil {
 		return wrap(err, "could not load package")
 	}
-	pkgs := prog.InitialPackages()
 	if len(pkgs) != 1 {
 		return errorf("more than one package selected: %v", pkgs)
 	}
-	pkg := pkgs[0].Pkg.Name()
+	pkg := pkgs[0].Name
 
 	cw, err := s.generate()
 	if err != nil {
@@ -51,7 +50,7 @@ func (s *State) Generate() error {
 	}
 	if !isDir {
 		gopath := filepath.SplitList(build.Default.GOPATH)[0]
-		path = filepath.Join(gopath, "src", filepath.FromSlash(pkgs[0].Pkg.Path()))
+		path = filepath.Join(gopath, "src", filepath.FromSlash(pkgs[0].PkgPath))
 	}
 	if len(s.Config.GenFile) == 0 {
 		cw.WriteGo(os.Stdout, pkg, "")
